@@ -21,3 +21,23 @@ To run the program:
 
 3) The main SC program is in the NN_Synth_1_SCFile.scd. To run the program, open the file in SC, place the cursor inside the parenthesis and press cmd-return. To stop the program, press cmd-period. This will also stop the Python program.
 
+Some Things:
+
+1) When the program starts, it will boot the server, load the keras models, and then prime the models. This will send 400 random values to the different models. If I don't do this, the models will be unresponsive. When the models are primed, the faders on Lemur should jump around for a couple of seconds. If this doesn't happen, SC does not have the correct NetAddr for your Lemur app.
+
+2) Make sure to press the predictOn button on the Lemur. This will turn messaging between SC and python on.
+
+3) Sometimes, usually the first time the files are loaded from any directory, keras will make an error loading one of the models. If it does this, the terminal window will be filled with errors and one or more of the models won't work. Press command-period in SC to stop everything, then try again.
+
+Training a Model:
+
+Each model is made of a number of points. 4 is a good minimum. To train the model:
+
+1) Press the predict button so it says predictOff. This will stop the models from working.
+2) Set the model to the one you want to train.
+3) Press load points to load the points of the model.
+4) You can flip through the points settings of the current model by pressing next point. This makes more sense with prediction on.
+5) Clear point will clear the current point.
+6) Make point will make a new point.
+7) Once the points are all made, press train. A new terminal window should pop up and train the model.
+8) Press reloadNNs to reload all the models and it should be ready to go.

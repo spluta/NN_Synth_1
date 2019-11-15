@@ -92,6 +92,8 @@ s.waitForBoot{
 		whichModel.postln;
 	}, '/Switches/x');
 
+	lemurAddr.sendMsg(*['/Switches/x'].addAll([1]).addAll(Array.fill(numModels-1, {0})));
+
 	synthVals = [['/Fader/', \freq1, ControlSpec(1, 10000, \exp)],
 		['/Fader2/', \freq2, ControlSpec(5, 10000, \exp)],
 		['/Fader3/', \modVol1, ControlSpec(0, 3000)],
@@ -124,6 +126,10 @@ s.waitForBoot{
 				});
 			});
 		};
+	};
+
+	(17..19).do{|i|
+		lemurAddr.sendMsg('/Fader'++i.asSymbol++'/x', 0);
 	};
 
 	setMultiBalls = {|vals|
@@ -243,6 +249,8 @@ s.waitForBoot{
 		predictOnOff = msg[0][1];
 	}, '/CustomButton7/x');
 
+	lemurAddr.sendMsg('/CustomButton7/x', 0);
+
 	/*OSCFunc({arg ...msg;
 	zValsOnOff = msg[0][1];
 	}, '/CustomButton8/x');*/
@@ -255,5 +263,6 @@ s.waitForBoot{
 			2, {"env".postln; synth.set(\onOff, zs[zs.maxIndex], \envOnOff, 1)}
 		);
 	}, '/Switches2/x');
+	lemurAddr.sendMsg('/Switches2/x', 1, 0, 0);
 }
 )
