@@ -4,9 +4,17 @@
 
 (
 s.waitForBoot{
-	var configure, xs, ys, zs, multiBallList, synthVals, pythonAddr, lemurAddr, whichModel, valList, allValsList, saveFile, modelFile, synth, sliders, buttons, win, path, hasControl, zValsOnOff, predictOnOff, setSlidersAndMultis, currentPoint, setMultiBalls, setSlidersAndSynth, envChoice, envOnOff, sizeOfNN, trainingList, numModels;
+	var configure, xs, ys, zs, multiBallList, synthVals, pythonAddrs, lemurAddr, whichModel, valList, allValsList, saveFile, modelFile, synth, sliders, buttons, win, path, hasControl, zValsOnOff, predictOnOff, setSlidersAndMultis, currentPoint, setMultiBalls, setSlidersAndSynth, envChoice, envOnOff, sizeOfNN, trainingList, numModels, pythonPath, ports, reloadNN;
 
-	pythonAddr = NetAddr("127.0.0.1", 5005);
+	pythonPath = "/usr/local/Cellar/python/3.7.5/Frameworks/Python.framework/Versions/3.7/bin/python3.7";
+
+	"killall Terminal".unixCmd;
+
+	numModels = 8;
+
+	ports = List.fill(numModels, {|i| 5005+i});
+
+	pythonAddrs = List.fill(numModels, {|i| NetAddr("127.0.0.1", ports[i])});
 	lemurAddr = NetAddr("127.0.0.1", 8000);
 
 	sizeOfNN = 16;
@@ -15,13 +23,15 @@ s.waitForBoot{
 	predictOnOff = 0;
 	zValsOnOff = 0;
 	currentPoint = 0;
-	numModels = 6;
 
 	path = Document.current.dir++"/";
 
-	("python3 "++path++"NN_Synth_1_Predict.py"+"--path"+path).runInTerminal;
+	//(pythonPath+path++"NN_Synth_1_Predict.py"+"--path"+path).postln.runInTerminal;
+	numModels.do{|i|
+		(pythonPath+path++"NN_Synth_1_Predict.py"+"--path"+path+"--port"+ports[i].asString+"--num"+i.asString+"&").unixCmd;
+	};
 
-	CmdPeriod.add({pythonAddr.sendMsg('/close')});
+	CmdPeriod.add({pythonAddrs.do{|i|i.sendMsg('/close')}});
 
 	synth = Synth("NN_Synth_1");
 
@@ -38,11 +48,11 @@ s.waitForBoot{
 		({
 			1.wait;
 			100.do{
-				pythonAddr.sendMsg(*['/predict', numModels.rand].addAll(Array.fill(4, {1.0.rand})));
+				pythonAddrs[numModels.rand].sendMsg(*['/predict'].addAll(Array.fill(4, {1.0.rand})));
 				0.01.wait
 			};
 			numModels.do{|i|
-				pythonAddr.sendMsg(*['/prime', i].addAll(Array.fill(4, {0})));
+				pythonAddrs[i].sendMsg(*['/prime'].addAll(Array.fill(4, {0})));
 				0.01.wait
 			};
 		}.fork)
@@ -54,7 +64,7 @@ s.waitForBoot{
 
 	configure = {
 		2.do{|i| multiBallList.put(i, [xs[i], ys[i]])};
-		if(predictOnOff==1){pythonAddr.sendMsg(*['/predict'].add(whichModel).addAll(multiBallList.flatten))};
+		if(predictOnOff==1){pythonAddrs[whichModel].sendMsg(*['/predict'].addAll(multiBallList.flatten))};
 	};
 
 	xs = List.fill(2, {0});
@@ -142,7 +152,7 @@ s.waitForBoot{
 	};
 
 	OSCFunc.new({arg ...msg;
-		msg.postln;
+		//msg.postln;
 		setSlidersAndSynth.value(msg[0].copyRange(1,sizeOfNN));
 		valList = msg[0].copyRange(1,sizeOfNN).asList;
 	}, '/nnOutputs');
@@ -215,6 +225,7 @@ s.waitForBoot{
 
 	//train the NN
 	OSCFunc({arg ...msg;
+		msg.postln;
 		{
 			saveFile = File(path++"trainingFile"++whichModel++".csv", "w");
 
@@ -232,17 +243,32 @@ s.waitForBoot{
 
 			saveFile = path++"trainingFile"++whichModel++".csv";
 			modelFile = path++"modelFile"++whichModel++".h5";
-			("python3 "++path++"NN_Synth_1_Save.py"+"--numbersFile"+saveFile+"--modelFile"+modelFile).runInTerminal;
+			(pythonPath+path++"NN_Synth_1_Save.py"+"--numbersFile"+saveFile+"--modelFile"+modelFile+"--num"+whichModel.asString+"&").postln.unixCmd;
 		}.fork;
+		OSCFunc({
+			reloadNN.value(whichModel);
+			"trained".postln;
+		}, '/trained').oneShot;
 	}, '/CustomButton5/x');
 
-	OSCFunc({arg ...msg;
-		"reload".postln;
+	reloadNN = {arg num;
 		{
-			pythonAddr.sendMsg('/close');
+			"close".postln;
+			pythonAddrs[num].sendMsg('/close');
 			1.wait;
-			("python3 "++path++"NN_Synth_1_Predict.py"+"--path"+path).runInTerminal;
+			"reload ".post; num.postln;
+			(pythonPath+path++"NN_Synth_1_Predict.py"+"--path"+path+"--port"+(ports[whichModel]).asString+"--num"+num.asString+"&").postln.unixCmd;
+			//(pythonPath+path++"NN_Synth_1_Predict.py"+"--path"+path+"--port"+(5005+i).asString+"--num"+i.asString+"&").unixCmd;
+			1.wait;
+			10.do{
+				pythonAddrs[num].sendMsg(*['/predict'].addAll(Array.fill(4, {1.0.rand})));
+				0.01.wait
+			};
 		}.fork;
+	};
+
+	OSCFunc({arg ...msg;
+			reloadNN.value(whichModel);
 	}, '/CustomButton6/x');
 
 	OSCFunc({arg ...msg;
