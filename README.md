@@ -1,6 +1,6 @@
 # NN_Synth_1
 
-NN_Synth_1 is cross-feedback synthesis engine built in SuperCollider which uses a keras/tensorflow neural network to map the four dimensional vector of two x-y pads to a 16 dimensional vector of the synthesis engine. The model loads six simultaneous neural networks, which each give specific mappings of the data from the x-y controls to the synth. The user can quickly switch between active neural nets and also make their own mappings by training each NN in the system individually.
+NN_Synth_1 is cross-feedback synthesis engine built in SuperCollider which uses a keras/tensorflow neural network to map the four dimensional vector of two x-y pads to a 16 dimensional vector of the synthesis engine. The model loads eight simultaneous neural networks, which each give specific mappings of the data from the x-y controls to the synth. The user can quickly switch between active neural nets and also make their own mappings by training each NN in the system individually.
 
 Dependencies:
 
@@ -11,7 +11,7 @@ pythonosc
 
 File Structure:
 
-All files should be in the same folder. "python3" needs to be in the path of the OS.
+All files should be in the same folder. The user will ned to manually set the path to python3 in the NN_Synth_1_SCFile.scd file.
 
 To run the program:
 
@@ -23,11 +23,9 @@ To run the program:
 
 Some Things:
 
-1) When the program starts, it will boot the server, load the keras models, and then prime the models. This will send 400 random values to the different models. If I don't do this, the models will be unresponsive. When the models are primed, the faders on Lemur should jump around for a couple of seconds. If this doesn't happen, SC does not have the correct NetAddr for your Lemur app.
+1) When the program starts, it will boot the server, load the keras models, and then prime the models. This will send 100 random values to the different models. If I don't do this, the models will be unresponsive. When the models are primed, the faders on Lemur should jump around for a couple of seconds. If this doesn't happen, SC does not have the correct NetAddr for your Lemur app.
 
 2) Make sure to press the predictOn button on the Lemur. This will turn messaging between SC and python on.
-
-3) Sometimes, usually the first time the files are loaded from any directory, keras will make an error loading one of the models. If it does this, the terminal window will be filled with errors and one or more of the models won't work. Press command-period in SC to stop everything, then try again.
 
 Training a Model:
 
@@ -39,5 +37,5 @@ Each model is made of a number of points. 4 is a good minimum. To train the mode
 4) You can flip through the points settings of the current model by pressing next point. This makes more sense with prediction on.
 5) Clear point will clear the current point.
 6) Make point will make a new point.
-7) Once the points are all made, press train. A new terminal window should pop up and train the model.
-8) Press reloadNNs to reload all the models and it should be ready to go.
+7) Once the points are all made, press train. 
+8) The neural net model should reload automatically and be reprimed (the faders will jump around a bit).
